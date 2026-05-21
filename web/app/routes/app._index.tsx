@@ -94,59 +94,76 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const functionsData = await functionsRes.json();
   const discountsData = await discountsRes.json();
 
-  const fn = functionsData.data?.shopifyFunctions?.nodes?.find(
-    (n: any) => n.title?.toLowerCase().includes("exclude") || n.app?.title?.toLowerCase().includes("service")
-  );
+  const nodes = functionsData.data?.shopifyFunctions?.nodes ?? [];
+  // Match by handle, title, or discount apiType
+  const fn = nodes.find(
+    (n: any) =>
+      n.title?.toLowerCase().includes("exclude") ||
+      n.apiType?.toLowerCase().includes("discount") ||
+      n.app?.title?.toLowerCase().includes("serviceexclude")
+  ) ?? nodes.find((n: any) => n.apiType?.toLowerCase().includes("discount"));
 
   const allDiscounts: any[] = discountsData.data?.discountNodes?.nodes ?? [];
-  const appDiscounts = allDiscounts.filter(
-    (node: any) =>
-      node.discount?.appDiscountType?.functionId === fn?.id
-  );
+  const appDiscounts = fn
+    ? allDiscounts.filter(
+        (node: any) => node.discount?.appDiscountType?.functionId === fn.id
+      )
+    : [];
 
-  return json({ functionId: fn?.id ?? null, discounts: appDiscounts });
+  return json({
+    functionId: fn?.id ?? null,
+    functionTitle: fn?.title ?? null,
+    discounts: appDiscounts,
+  });
 };
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { admin } = await authenticate.admin(request);
-  const formData = await request.formData();
-  const intent = formData.get("intent");
+  try {
+    const { admin } = await authenticate.admin(request);
+    const formData = await request.formData();
+    const intent = formData.get("intent");
 
-  if (intent === "create") {
-    const code = String(formData.get("code")).trim().toUpperCase();
-    const title = String(formData.get("title")).trim();
-    const functionId = String(formData.get("functionId"));
+    if (intent === "create") {
+      const code = String(formData.get("code") ?? "").trim().toUpperCase();
+      const title = String(formData.get("title") ?? "").trim();
+      const functionId = String(formData.get("functionId") ?? "").trim();
 
-    if (!code || !title || !functionId) {
-      return json({ error: "All fields are required." }, { status: 400 });
-    }
+      if (!code || !title || !functionId || functionId === "null") {
+        return json({ error: "All fields are required. Make sure the function is deployed." });
+      }
 
-    const res = await admin.graphql(CREATE_DISCOUNT, {
-      variables: {
-        discount: {
-          title,
-          functionId,
-          startsAt: new Date().toISOString(),
-          codes: { add: [{ code }] },
+      const res = await admin.graphql(CREATE_DISCOUNT, {
+        variables: {
+          discount: {
+            title,
+            functionId,
+            startsAt: new Date().toISOString(),
+            codes: { add: [{ code }] },
+          },
         },
-      },
-    });
+      });
 
-    const data = await res.json();
-    const errors = data.data?.discountCodeAppCreate?.userErrors;
-    if (errors?.length) {
-      return json({ error: errors.map((e: any) => e.message).join(", ") });
+      const data = await res.json();
+      const errors = data?.data?.discountCodeAppCreate?.userErrors;
+      if (errors?.length) {
+        return json({ error: errors.map((e: any) => e.message).join(", ") });
+      }
+      if (!data?.data?.discountCodeAppCreate?.codeAppDiscount) {
+        return json({ error: `GraphQL error: ${JSON.stringify(data?.errors ?? data)}` });
+      }
+      return json({ success: true });
     }
-    return json({ success: true });
-  }
 
-  if (intent === "delete") {
-    const id = String(formData.get("id"));
-    await admin.graphql(DELETE_DISCOUNT, { variables: { id } });
-    return json({ success: true });
-  }
+    if (intent === "delete") {
+      const id = String(formData.get("id") ?? "");
+      if (id) await admin.graphql(DELETE_DISCOUNT, { variables: { id } });
+      return json({ success: true });
+    }
 
-  return json({});
+    return json({});
+  } catch (err: any) {
+    return json({ error: err?.message ?? "Unexpected error. Check Vercel logs." });
+  }
 };
 
 export default function Index() {
