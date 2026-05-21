@@ -1,5 +1,4 @@
 import { Redis } from "@upstash/redis";
-import { Session } from "@shopify/shopify-api";
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_REST_URL!,
@@ -9,18 +8,18 @@ const redis = new Redis({
 const PREFIX = "shopify_session_";
 
 export const sessionStorage = {
-  async storeSession(session: Session): Promise<boolean> {
-    await redis.set(`${PREFIX}${session.id}`, JSON.stringify(session.toPropertyArray()));
+  async storeSession(session: any): Promise<boolean> {
+    await redis.set(`${PREFIX}${session.id}`, JSON.stringify(session));
     if (session.shop) {
       await redis.sadd(`${PREFIX}shop_${session.shop}`, session.id);
     }
     return true;
   },
 
-  async loadSession(id: string): Promise<Session | undefined> {
-    const data = await redis.get<[string, string | number | boolean][]>(`${PREFIX}${id}`);
+  async loadSession(id: string): Promise<any | undefined> {
+    const data = await redis.get<any>(`${PREFIX}${id}`);
     if (!data) return undefined;
-    return Session.fromPropertyArray(data);
+    return data;
   },
 
   async deleteSession(id: string): Promise<boolean> {
@@ -37,10 +36,10 @@ export const sessionStorage = {
     return true;
   },
 
-  async findSessionsByShop(shop: string): Promise<Session[]> {
+  async findSessionsByShop(shop: string): Promise<any[]> {
     const ids = await redis.smembers(`${PREFIX}shop_${shop}`);
     if (!ids.length) return [];
     const sessions = await Promise.all(ids.map((id) => this.loadSession(id)));
-    return sessions.filter((s): s is Session => s !== undefined);
+    return sessions.filter(Boolean);
   },
 };
