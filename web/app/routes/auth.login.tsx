@@ -5,6 +5,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   return login(request);
 };
 
-export default function Index() {
+export default function AuthLogin() {
   return null;
 }
