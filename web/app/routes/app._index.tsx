@@ -169,7 +169,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const codeData = await codeRes.json();
       const codeErrors = codeData?.data?.discountRedeemCodeBulkAdd?.userErrors;
       if (codeErrors?.length) {
-        return json({ error: codeErrors.map((e: any) => e.message).join(", ") });
+        return json({ error: `API error (sent code="${code}" discountId="${discountId}"): ${codeErrors.map((e: any) => e.message).join(", ")}` });
       }
 
       return json({ success: true });
