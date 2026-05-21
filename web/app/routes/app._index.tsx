@@ -137,7 +137,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const functionId = String(formData.get("functionId") ?? "").trim();
 
       if (!code || !title || !functionId || functionId === "null") {
-        return json({ error: "All fields are required. Make sure the function is deployed." });
+        return json({ error: `DEBUG: code="${code}" title="${title}" functionId="${functionId}"` });
       }
 
       // Step 1: create the discount
