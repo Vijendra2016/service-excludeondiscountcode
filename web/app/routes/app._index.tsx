@@ -1,7 +1,7 @@
 import { useState, useCallback } from "react";
 import type { LoaderFunctionArgs, ActionFunctionArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { useLoaderData, useActionData, useNavigation, Form } from "@remix-run/react";
+import { useLoaderData, useActionData, useNavigation, useSubmit, Form } from "@remix-run/react";
 import {
   Page,
   Layout,
@@ -147,6 +147,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             title,
             functionId,
             startsAt: new Date().toISOString(),
+            discountClasses: ["ORDER"],
           },
         },
       });
@@ -192,6 +193,7 @@ export default function Index() {
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
 
+  const submit = useSubmit();
   const [modalOpen, setModalOpen] = useState(false);
   const [code, setCode] = useState("");
   const [title, setTitle] = useState("");
@@ -203,6 +205,16 @@ export default function Index() {
   }, []);
 
   const closeModal = useCallback(() => setModalOpen(false), []);
+
+  const handleCreate = useCallback(() => {
+    const formData = new FormData();
+    formData.set("intent", "create");
+    formData.set("functionId", functionId ?? "");
+    formData.set("title", title);
+    formData.set("code", code);
+    submit(formData, { method: "post" });
+    setModalOpen(false);
+  }, [submit, functionId, title, code]);
 
   const rows = discounts.map((node: any) => {
     const d = node.discount;
@@ -297,38 +309,28 @@ export default function Index() {
         primaryAction={{
           content: "Create",
           loading: isSubmitting,
-          onAction: () => {
-            document.getElementById("create-discount-form")?.dispatchEvent(
-              new Event("submit", { bubbles: true, cancelable: true })
-            );
-          },
+          onAction: handleCreate,
         }}
         secondaryActions={[{ content: "Cancel", onAction: closeModal }]}
       >
         <Modal.Section>
-          <Form method="post" id="create-discount-form" onSubmit={closeModal}>
-            <input type="hidden" name="intent" value="create" />
-            <input type="hidden" name="functionId" value={functionId ?? ""} />
-            <FormLayout>
-              <TextField
-                label="Discount title"
-                name="title"
-                value={title}
-                onChange={setTitle}
-                placeholder="e.g. 10% OFF (excludes services)"
-                autoComplete="off"
-              />
-              <TextField
-                label="Discount code"
-                name="code"
-                value={code}
-                onChange={setCode}
-                placeholder="e.g. SAVE10"
-                autoComplete="off"
-                helpText="Customers will enter this at checkout. Letters and numbers only."
-              />
-            </FormLayout>
-          </Form>
+          <FormLayout>
+            <TextField
+              label="Discount title"
+              value={title}
+              onChange={setTitle}
+              placeholder="e.g. 10% OFF (excludes services)"
+              autoComplete="off"
+            />
+            <TextField
+              label="Discount code"
+              value={code}
+              onChange={setCode}
+              placeholder="e.g. SAVE10"
+              autoComplete="off"
+              helpText="Customers will enter this at checkout. Letters and numbers only."
+            />
+          </FormLayout>
         </Modal.Section>
       </Modal>
     </Page>
