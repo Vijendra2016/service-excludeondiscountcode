@@ -236,7 +236,7 @@ export default function Index() {
   return (
     <Page
       title="Service Exclude — Discount Manager"
-      subtitle="Discount codes that exclude service-tagged products from order discounts"
+      subtitle="Discount codes that exclude service-tagged products from order discounts — v4"
       primaryAction={
         functionId
           ? { content: "Create Discount Code", onAction: openModal }
