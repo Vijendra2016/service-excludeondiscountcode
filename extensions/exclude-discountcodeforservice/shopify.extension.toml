@@ -1,0 +1,23 @@
+api_version = "2026-04"
+
+[[extensions]]
+name = "t:name"
+handle = "excludediscountcodeforservice"
+type = "function"
+uid = "efd6fb82-c23b-1169-7c7a-72f1b4a5bb73ddb725ec"
+description = "t:description"
+
+  [[extensions.targeting]]
+  target = "cart.lines.discounts.generate.run"
+  input_query = "src/cart_lines_discounts_generate_run.graphql"
+  export = "cart_lines_discounts_generate_run"
+
+  [[extensions.targeting]]
+  target = "cart.delivery-options.discounts.generate.run"
+  input_query = "src/cart_delivery_options_discounts_generate_run.graphql"
+  export = "cart_delivery_options_discounts_generate_run"
+
+  [extensions.build]
+  command = "cargo build --target=wasm32-unknown-unknown --release"
+  path = "target/wasm32-unknown-unknown/release/excludediscountcodeforservice.wasm"
+  watch = [ "src/**/*.rs" ]

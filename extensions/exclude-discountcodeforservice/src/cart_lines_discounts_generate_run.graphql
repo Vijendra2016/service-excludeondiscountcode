@@ -1,0 +1,23 @@
+query Input {
+  cart {
+    lines {
+      id
+      cost {
+        subtotalAmount {
+          amount
+        }
+      }
+      merchandise {
+        __typename
+        ... on ProductVariant {
+          product {
+            hasAnyTag(tags: ["Service", "service"])
+          }
+        }
+      }
+    }
+  }
+  discount {
+    discountClasses
+  }
+}
