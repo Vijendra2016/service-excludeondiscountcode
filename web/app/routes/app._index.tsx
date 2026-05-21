@@ -67,8 +67,16 @@ const CREATE_DISCOUNT = `#graphql
       codeAppDiscount {
         discountId
         title
-        codes(first: 1) { nodes { code } }
       }
+      userErrors { field message }
+    }
+  }
+`;
+
+const ADD_CODE = `#graphql
+  mutation AddCode($discountId: ID!, $codes: [DiscountRedeemCodeInput!]!) {
+    discountRedeemCodeBulkAdd(discountId: $discountId, codes: $codes) {
+      bulkCreations { id }
       userErrors { field message }
     }
   }
@@ -132,25 +140,37 @@ export const action = async ({ request }: ActionFunctionArgs) => {
         return json({ error: "All fields are required. Make sure the function is deployed." });
       }
 
-      const res = await admin.graphql(CREATE_DISCOUNT, {
+      // Step 1: create the discount
+      const createRes = await admin.graphql(CREATE_DISCOUNT, {
         variables: {
           discount: {
             title,
             functionId,
             startsAt: new Date().toISOString(),
-            codes: { add: [{ code }] },
           },
         },
       });
 
-      const data = await res.json();
-      const errors = data?.data?.discountCodeAppCreate?.userErrors;
-      if (errors?.length) {
-        return json({ error: errors.map((e: any) => e.message).join(", ") });
+      const createData = await createRes.json();
+      const createErrors = createData?.data?.discountCodeAppCreate?.userErrors;
+      if (createErrors?.length) {
+        return json({ error: createErrors.map((e: any) => e.message).join(", ") });
       }
-      if (!data?.data?.discountCodeAppCreate?.codeAppDiscount) {
-        return json({ error: `GraphQL error: ${JSON.stringify(data?.errors ?? data)}` });
+      const discountId = createData?.data?.discountCodeAppCreate?.codeAppDiscount?.discountId;
+      if (!discountId) {
+        return json({ error: `Failed to create discount: ${JSON.stringify(createData?.errors ?? createData)}` });
       }
+
+      // Step 2: add the discount code
+      const codeRes = await admin.graphql(ADD_CODE, {
+        variables: { discountId, codes: [{ code }] },
+      });
+      const codeData = await codeRes.json();
+      const codeErrors = codeData?.data?.discountRedeemCodeBulkAdd?.userErrors;
+      if (codeErrors?.length) {
+        return json({ error: codeErrors.map((e: any) => e.message).join(", ") });
+      }
+
       return json({ success: true });
     }
 
