@@ -63,7 +63,7 @@ const GET_DISCOUNTS = `#graphql
 
 const CREATE_DISCOUNT = `#graphql
   mutation CreateDiscount($discount: DiscountCodeAppInput!) {
-    discountCodeAppCreate(discount: $discount) {
+    discountCodeAppCreate(codeAppDiscount: $discount) {
       codeAppDiscount {
         discountId
         title
