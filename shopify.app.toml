@@ -1,6 +1,6 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
-client_id = "7802bf7bd21daa7d5c936cbfde1076e9"
+client_id = "bffe9d28182df8d635ebc56bdcf7c5d2"
 application_url = "https://service-excludeondiscountcode-web.vercel.app"
 embedded = true
 name = "ServiceExcludeondiscountcode"
