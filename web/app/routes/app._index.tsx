@@ -148,6 +148,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
             functionId,
             startsAt: new Date().toISOString(),
             discountClasses: ["ORDER"],
+            code,
           },
         },
       });
@@ -155,7 +156,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
       const createData = await createRes.json();
       const createErrors = createData?.data?.discountCodeAppCreate?.userErrors;
       if (createErrors?.length) {
-        return json({ error: createErrors.map((e: any) => e.message).join(", ") });
+        return json({ error: createErrors.map((e: any) => `[${e.field?.join(".")}] ${e.message}`).join(", ") });
       }
       const discountId = createData?.data?.discountCodeAppCreate?.codeAppDiscount?.discountId;
       if (!discountId) {
