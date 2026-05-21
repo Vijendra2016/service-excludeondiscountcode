@@ -6,6 +6,7 @@ import {
   ScrollRestoration,
 } from "@remix-run/react";
 import type { LinksFunction, LoaderFunctionArgs } from "@remix-run/node";
+import { json } from "@remix-run/node";
 import polarisStyles from "@shopify/polaris/build/esm/styles.css?url";
 import { addDocumentResponseHeaders } from "./shopify.server";
 
@@ -14,9 +15,10 @@ export const links: LinksFunction = () => [
 ];
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  return new Response(null, {
-    headers: addDocumentResponseHeaders(request, new Headers()),
-  });
+  return json(
+    {},
+    { headers: addDocumentResponseHeaders(request, new Headers()) }
+  );
 };
 
 export default function App() {

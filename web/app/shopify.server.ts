@@ -15,9 +15,7 @@ const shopify = shopifyApp({
   authPathPrefix: "/auth",
   sessionStorage: new RedisSessionStorage(process.env.REDIS_URL!),
   distribution: AppDistribution.AppStore,
-  future: {
-    unstable_newEmbeddedAuthStrategy: true,
-  },
+  future: {},
 });
 
 export default shopify;
